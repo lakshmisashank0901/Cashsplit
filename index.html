@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Splitbook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">Splitbook</div>
+      <div class="topbar-actions">
+        <p class="msg sync" id="sync-status" role="status" hidden></p>
+        <label class="field-inline" hidden>
+          <span>Currency</span>
+          <select id="currency">
+            <option value="₹">INR (₹)</option>
+            <option value="$">USD ($)</option>
+            <option value="€">EUR (€)</option>
+            <option value="£">GBP (£)</option>
+          </select>
+        </label>
+        <button id="reset" class="btn btn-ghost" hidden>Reset</button>
+        <button id="sign-out" class="btn btn-ghost" hidden>Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <section id="auth" class="auth" hidden>
+    <form id="auth-form" class="panel auth-card">
+      <h2 id="auth-title">Sign in</h2>
+      <p class="hint">Your expenses are saved to your account, so they're on every device you sign in from.</p>
+      <label class="field"><span>Email</span><input id="auth-email" type="email" autocomplete="email" required></label>
+      <label class="field"><span>Password</span><input id="auth-password" type="password" autocomplete="current-password" minlength="6" required></label>
+      <p class="msg" id="auth-msg" role="status"></p>
+      <button class="btn" id="auth-submit">Sign in</button>
+      <button type="button" class="btn-text" id="auth-switch">Create an account</button>
+    </form>
+  </section>
+
+  <main class="page" id="app" hidden>
+    <section class="stats" id="stats" aria-label="Overview"></section>
+
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Friends</h2>
+          <span class="count" id="people-count"></span>
+        </div>
+        <form id="person-form" class="inline-form">
+          <input id="person-name" placeholder="Add a name" required autocomplete="off">
+          <button class="btn">Add</button>
+        </form>
+        <p class="msg" id="person-msg" role="status"></p>
+        <ul id="people" class="people"></ul>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>New expense</h2></div>
+        <form id="expense-form" class="form">
+          <div class="form-row">
+            <label class="field grow"><span>Description</span>
+              <input id="exp-desc" placeholder="Dinner at Toit" required autocomplete="off"></label>
+            <label class="field w-amount"><span>Amount</span>
+              <input id="exp-amount" type="number" step="0.01" min="0.01" placeholder="0.00" required></label>
+          </div>
+          <div class="form-row">
+            <label class="field grow"><span>Paid by</span><select id="exp-paidby" required></select></label>
+            <label class="field grow"><span>Split</span>
+              <select id="exp-mode">
+                <option value="equal">Equally</option>
+                <option value="exact">Exact amounts</option>
+                <option value="percent">Percentages</option>
+              </select></label>
+            <label class="field w-date"><span>Date</span><input id="exp-date" type="date" required></label>
+          </div>
+          <table class="split-table" id="exp-participants"></table>
+          <div class="form-foot">
+            <p class="msg" id="exp-msg" role="status"></p>
+            <button class="btn">Add expense</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="grid-2 grid-wide-right">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Settle up</h2>
+          <span class="hint">Fewest payments to clear all debts</span>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="settle-table"></table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Balances</h2></div>
+        <div class="table-wrap">
+          <table class="table" id="summary-table"></table>
+        </div>
+        <p class="footnote">Balance = Paid − Share + Sent − Received. Positive means they are owed money.</p>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Expenses</h2>
+        <span class="hint">Each column shows what that person owes for the expense</span>
+      </div>
+      <div class="table-wrap">
+        <table class="table" id="expense-table"></table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Payments</h2></div>
+      <div class="table-wrap">
+        <table class="table" id="payment-table"></table>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="store.js"></script>
+  <script src="split.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
