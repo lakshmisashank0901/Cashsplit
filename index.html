@@ -35,7 +35,13 @@
       <h2 id="auth-title">Sign in</h2>
       <p class="hint">Your expenses are saved to your account, so they're on every device you sign in from.</p>
       <label class="field"><span>Email</span><input id="auth-email" type="email" autocomplete="email" required></label>
-      <label class="field"><span>Password</span><input id="auth-password" type="password" autocomplete="current-password" minlength="6" required></label>
+      <div class="field">
+        <label for="auth-password">Password</label>
+        <div class="password-field">
+          <input id="auth-password" type="password" autocomplete="current-password" minlength="6" required>
+          <button type="button" class="pw-toggle" id="pw-toggle" aria-controls="auth-password" aria-pressed="false">Show</button>
+        </div>
+      </div>
       <p class="msg" id="auth-msg" role="status"></p>
       <button class="btn" id="auth-submit">Sign in</button>
       <button type="button" class="btn-text" id="auth-switch">Create an account</button>
@@ -110,7 +116,7 @@
     <section class="panel">
       <div class="panel-head">
         <h2>Expenses</h2>
-        <span class="hint">Each column shows what that person owes for the expense</span>
+        <span class="hint">What each person owes for every expense</span>
       </div>
       <div class="table-wrap">
         <table class="table" id="expense-table"></table>

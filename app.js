@@ -26,8 +26,12 @@ const cents = Split.fromCents;
 
 // Old entries stored a timestamp; new ones store a YYYY-MM-DD string.
 const dateValue = (d) => (typeof d === "number" ? d : new Date(`${d}T00:00`).getTime());
-const dateLabel = (d) =>
-  new Date(dateValue(d)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+// DD/MM/YYYY
+const dateLabel = (d) => {
+  const t = new Date(dateValue(d));
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(t.getDate())}/${pad(t.getMonth() + 1)}/${t.getFullYear()}`;
+};
 
 function setMsg(el, text, isError = false) {
   el.textContent = text;
@@ -295,9 +299,9 @@ function renderSettle(transfers) {
     <tbody>${transfers
       .map(
         (t) => `<tr>
-          <td>${esc(nameOf(t.from))}</td>
-          <td>${esc(nameOf(t.to))}</td>
-          <td class="num">${num(t.amount)}</td>
+          <td data-label="From">${esc(nameOf(t.from))}</td>
+          <td data-label="To">${esc(nameOf(t.to))}</td>
+          <td class="num" data-label="Amount (${cur()})">${num(t.amount)}</td>
           <td class="action"><button class="btn btn-ghost btn-sm" data-action="pay" data-from="${esc(t.from)}" data-to="${esc(t.to)}" data-amount="${t.amount}">Record payment</button></td>
         </tr>`
       )
@@ -310,7 +314,7 @@ function renderSummary(summary) {
     return;
   }
   const rows = state.people.map((p) => ({ name: p.name, ...summary[p.id] }));
-  const cell = (c) => `<td class="num${c ? "" : " dim"}">${num(cents(c))}</td>`;
+  const cell = (c, label) => `<td class="num${c ? "" : " dim"}" data-label="${label}">${num(cents(c))}</td>`;
   $("summary-table").innerHTML = `
     <thead><tr>
       <th>Person</th><th class="num">Paid</th><th class="num">Share</th>
@@ -319,9 +323,9 @@ function renderSummary(summary) {
     <tbody>${rows
       .map(
         (r) => `<tr>
-          <td>${esc(r.name)}</td>
-          ${cell(r.paid)}${cell(r.share)}${cell(r.sent)}${cell(r.received)}
-          <td class="num ${r.net > 0 ? "pos" : r.net < 0 ? "neg" : "dim"}">${signed(cents(r.net))}</td>
+          <td class="title">${esc(r.name)}</td>
+          ${cell(r.paid, "Paid")}${cell(r.share, "Share")}${cell(r.sent, "Sent")}${cell(r.received, "Received")}
+          <td class="num ${r.net > 0 ? "pos" : r.net < 0 ? "neg" : "dim"}" data-label="Balance (${cur()})">${signed(cents(r.net))}</td>
         </tr>`
       )
       .join("")}</tbody>`;
@@ -342,12 +346,16 @@ function renderExpenses() {
     for (const id in shares) if (id in totals) totals[id] += shares[id];
     const tag = x.mode === "exact" ? `<span class="tag">exact</span>` : x.mode === "percent" ? `<span class="tag">%</span>` : "";
     return `<tr>
-      <td class="dim">${dateLabel(x.date ?? x.created)}</td>
-      <td class="wrap">${esc(x.description)}${tag}</td>
-      <td>${esc(nameOf(x.paidBy))}</td>
-      <td class="num">${num(x.amount)}</td>
+      <td class="dim" data-label="Date">${dateLabel(x.date ?? x.created)}</td>
+      <td class="wrap title">${esc(x.description)}${tag}</td>
+      <td data-label="Paid by">${esc(nameOf(x.paidBy))}</td>
+      <td class="num" data-label="Amount (${cur()})">${num(x.amount)}</td>
       ${people
-        .map((p) => (shares[p.id] ? `<td class="col-person">${num(cents(shares[p.id]))}</td>` : `<td class="col-person dim">–</td>`))
+        .map((p) =>
+          shares[p.id]
+            ? `<td class="col-person" data-label="${esc(p.name)}">${num(cents(shares[p.id]))}</td>`
+            : `<td class="col-person dim none" data-label="${esc(p.name)}">–</td>`
+        )
         .join("")}
       <td class="action"><button class="btn-text" data-action="delete" data-kind="expenses" data-id="${esc(x.id)}">Delete</button></td>
     </tr>`;
@@ -360,10 +368,10 @@ function renderExpenses() {
     </tr></thead>
     <tbody>${rows.join("")}</tbody>
     <tfoot><tr>
-      <td>Total</td><td></td><td></td>
-      <td class="num">${num(cents(grand))}</td>
-      ${people.map((p) => `<td class="num">${num(cents(totals[p.id]))}</td>`).join("")}
-      <td></td>
+      <td class="title">Total</td><td class="none"></td><td class="none"></td>
+      <td class="num" data-label="Amount (${cur()})">${num(cents(grand))}</td>
+      ${people.map((p) => `<td class="num" data-label="${esc(p.name)}">${num(cents(totals[p.id]))}</td>`).join("")}
+      <td class="none"></td>
     </tr></tfoot>`;
 }
 
@@ -378,10 +386,10 @@ function renderPayments() {
       .sort(byDateDesc)
       .map(
         (x) => `<tr>
-          <td class="dim">${dateLabel(x.date ?? x.created)}</td>
-          <td>${esc(nameOf(x.from))}</td>
-          <td>${esc(nameOf(x.to))}</td>
-          <td class="num">${num(x.amount)}</td>
+          <td class="dim" data-label="Date">${dateLabel(x.date ?? x.created)}</td>
+          <td data-label="From">${esc(nameOf(x.from))}</td>
+          <td data-label="To">${esc(nameOf(x.to))}</td>
+          <td class="num" data-label="Amount (${cur()})">${num(x.amount)}</td>
           <td class="action"><button class="btn-text" data-action="delete" data-kind="payments" data-id="${esc(x.id)}">Delete</button></td>
         </tr>`
       )
@@ -414,6 +422,18 @@ function showApp(signedIn) {
   $("reset").hidden = !signedIn;
 }
 
+function setPasswordVisible(visible) {
+  $("auth-password").type = visible ? "text" : "password";
+  $("pw-toggle").textContent = visible ? "Hide" : "Show";
+  $("pw-toggle").setAttribute("aria-pressed", String(visible));
+  $("pw-toggle").setAttribute("aria-label", visible ? "Hide password" : "Show password");
+}
+$("pw-toggle").addEventListener("click", () => {
+  const input = $("auth-password");
+  setPasswordVisible(input.type === "password");
+  input.focus();
+});
+
 let creatingAccount = false;
 $("auth-switch").addEventListener("click", () => {
   creatingAccount = !creatingAccount;
@@ -428,6 +448,7 @@ $("auth-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = $("auth-email").value.trim();
   const password = $("auth-password").value;
+  setPasswordVisible(false);
   const btn = $("auth-submit");
   btn.disabled = true;
   setMsg($("auth-msg"), creatingAccount ? "Creating account…" : "Signing in…");

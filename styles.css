@@ -57,7 +57,7 @@ h2 { margin: 0; font-size: 14px; font-weight: 600; }
 
 .page { max-width: 1120px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-.grid-wide-right { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); }
+.grid-wide-right { grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 860px) {
   .grid-2 { grid-template-columns: minmax(0, 1fr); }
   .page, .topbar-inner { padding-left: 16px; padding-right: 16px; }
@@ -192,3 +192,64 @@ input[type="number"] { font-variant-numeric: tabular-nums; }
 .auth-card .btn-text { justify-self: center; }
 .auth-card .btn-text:hover { color: var(--text); }
 .btn:disabled { opacity: 0.6; cursor: default; }
+
+/* ---------- Password field ---------- */
+.password-field { position: relative; }
+.password-field input { padding-right: 64px; }
+.password-field input::-ms-reveal { display: none; }
+.pw-toggle {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  height: 26px; padding: 0 10px; border: none; border-radius: 4px; background: none;
+  font: inherit; font-size: 12px; font-weight: 500; color: var(--text-2); cursor: pointer;
+}
+.pw-toggle:hover { background: var(--surface-2); color: var(--text); }
+.pw-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
+
+/* ---------- Phones ---------- */
+.people li { flex-wrap: wrap; gap: 2px 12px; }
+.person { min-width: 0; overflow-wrap: anywhere; }
+
+/* iOS Safari renders date inputs wider than their box unless reset. */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; text-align: left; line-height: 34px; }
+}
+
+@media (max-width: 640px) {
+  /* 16px stops iPhones zooming in (and leaving the page zoomed) when a field is tapped. */
+  input, select, .field input, .field select, .split-table input[type="number"] { font-size: 16px; }
+  input, select, .btn { height: 40px; }
+  .split-table input[type="number"] { height: 36px; width: 96px; }
+
+  .people li { flex-direction: column; align-items: flex-start; }
+  .people li > span:last-child { padding-left: 34px; }
+
+  .stat { padding: 12px 14px; }
+  .stat-value { font-size: 17px; overflow-wrap: anywhere; }
+
+  /* Tables become one card per row, each value labelled, so nothing scrolls sideways. */
+  .table-wrap { overflow: visible; margin: 0; padding: 0; }
+  .table thead { display: none; }
+  .table, .table tbody, .table tfoot { display: block; width: 100%; }
+  .table tr {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; margin-bottom: 10px;
+  }
+  .table tfoot tr { background: var(--surface-2); margin-bottom: 0; }
+  .table td, .table td:first-child, .table td:last-child {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+    padding: 4px 0; border: none; white-space: normal; text-align: right; min-width: 0;
+  }
+  .table td::before {
+    content: attr(data-label); flex-shrink: 0; text-align: left;
+    color: var(--text-3); font-size: 12px; font-weight: 400;
+  }
+  .table td:not([data-label])::before { content: none; }
+  .table td.title { order: -1; justify-content: flex-start; gap: 6px; text-align: left; font-weight: 600; padding-top: 6px; }
+  .table td.none { display: none; }
+  .table td.action { width: auto; justify-content: flex-end; padding-top: 6px; }
+  .table td.action .btn { height: 34px; }
+  .table tbody tr:hover td { background: none; }
+  .table tfoot td { border-top: none; }
+  .table .empty-row { border: none; padding: 0; }
+  .table .empty-row td { justify-content: center; text-align: center; }
+}
