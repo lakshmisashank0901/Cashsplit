@@ -18,6 +18,7 @@
     if (expense.mode === "exact") {
       let sum = 0;
       for (const id of ids) {
+        if (Number(expense.shares[id] || 0) < 0) throw new Error("Amounts can't be negative");
         result[id] = toCents(expense.shares[id] || 0);
         sum += result[id];
       }
@@ -28,6 +29,7 @@
     }
 
     if (expense.mode === "percent") {
+      if (ids.some((id) => Number(expense.shares[id] || 0) < 0)) throw new Error("Percentages can't be negative");
       const pctSum = ids.reduce((s, id) => s + Number(expense.shares[id] || 0), 0);
       if (Math.abs(pctSum - 100) > 0.001) throw new Error(`Percentages add up to ${pctSum}%, not 100%`);
       let assigned = 0;

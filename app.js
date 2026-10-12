@@ -19,7 +19,7 @@ function numberFmt() {
 // Plain number for table cells (currency shown in the column header).
 const num = (v) => numberFmt().format(Math.abs(v));
 // With currency symbol, for prose and headline figures.
-const money = (v) => `${state.currency}${num(v)}`;
+const money = (v) => `${esc(state.currency)}${num(v)}`;
 // Signed, for balances.
 const signed = (v) => (v > 0 ? `+${num(v)}` : v < 0 ? `−${num(v)}` : num(0));
 const cents = Split.fromCents;
@@ -75,7 +75,7 @@ $("exp-participants").addEventListener("input", updateSplitPreview);
 // so typing into the share inputs never loses focus.
 function renderSplitEditor() {
   const mode = $("exp-mode").value;
-  const shareHead = mode === "exact" ? `Amount (${state.currency})` : mode === "percent" ? "Percent" : "";
+  const shareHead = mode === "exact" ? `Amount (${esc(state.currency)})` : mode === "percent" ? "Percent" : "";
   if (state.people.length === 0) {
     $("exp-participants").innerHTML = `<tbody><tr><td class="empty">Add friends to split an expense.</td></tr></tbody>`;
     return;
@@ -89,9 +89,9 @@ function renderSplitEditor() {
     <tbody>${state.people
       .map(
         (p) => `<tr>
-          <td><label><input type="checkbox" data-id="${p.id}" checked>${esc(p.name)}</label></td>
-          ${mode === "equal" ? "" : `<td class="num"><input type="number" step="0.01" min="0" data-share="${p.id}" placeholder="0"></td>`}
-          <td class="num" data-owes="${p.id}">–</td>
+          <td><label><input type="checkbox" data-id="${esc(p.id)}" checked>${esc(p.name)}</label></td>
+          ${mode === "equal" ? "" : `<td class="num"><input type="number" step="0.01" min="0" data-share="${esc(p.id)}" placeholder="0"></td>`}
+          <td class="num" data-owes="${esc(p.id)}">–</td>
         </tr>`
       )
       .join("")}</tbody>
@@ -144,8 +144,9 @@ function updateSplitPreview() {
   } else if (x.mode === "exact") {
     const assigned = x.participants.reduce((s, id) => s + (x.shares[id] || 0), 0);
     const left = (x.amount || 0) - assigned;
-    status.textContent = `Assigned ${money(assigned)} of ${money(x.amount || 0)}` +
-      (Math.abs(left) >= 0.005 ? ` · ${left > 0 ? "Remaining" : "Over by"} ${money(left)}` : "");
+    const plain = (v) => `${state.currency}${num(v)}`; // textContent, so no escaping
+    status.textContent = `Assigned ${plain(assigned)} of ${plain(x.amount || 0)}` +
+      (Math.abs(left) >= 0.005 ? ` · ${left > 0 ? "Remaining" : "Over by"} ${plain(left)}` : "");
   } else {
     const pct = x.participants.reduce((s, id) => s + (x.shares[id] || 0), 0);
     const left = 100 - pct;
@@ -159,6 +160,8 @@ $("expense-form").addEventListener("submit", (e) => {
   const msg = $("exp-msg");
   if (state.people.length === 0) return setMsg(msg, "Add friends first.", true);
   const expense = { id: uid(), created: Date.now(), ...readExpenseForm() };
+  if (!expense.description) return setMsg(msg, "Add a description.", true);
+  if (expense.amount > Store.MAX_AMOUNT) return setMsg(msg, "That amount is too large.", true);
   try {
     Split.computeShares(expense); // validates
   } catch (err) {
@@ -181,12 +184,14 @@ function recordPayment(from, to, amount) {
   Store.save("payment", payment, state).catch(() => {});
 }
 function deleteEntry(kind, id) {
+  if (kind !== "expenses" && kind !== "payments") return;
   state[kind] = state[kind].filter((x) => x.id !== id);
   render();
   Store.remove(id, state).catch(() => {});
 }
 
 $("currency").addEventListener("change", (e) => {
+  if (!Store.CURRENCIES.includes(e.target.value)) return;
   state.currency = e.target.value;
   render();
   Store.save("settings", { currency: state.currency }, state).catch(() => {});
@@ -267,7 +272,7 @@ function renderPeople(summary) {
           : `<span class="dim">settled</span>`;
         return `<li>
           <span class="person"><span class="avatar">${esc(initials(p.name))}</span>${esc(p.name)}</span>
-          <span>${status} <button class="btn-text" data-action="remove-person" data-id="${p.id}">Remove</button></span>
+          <span>${status} <button class="btn-text" data-action="remove-person" data-id="${esc(p.id)}">Remove</button></span>
         </li>`;
       })
       .join("") || `<li class="empty">No one here yet. Add the people you're splitting with.</li>`;
@@ -276,7 +281,7 @@ function renderPeople(summary) {
 function renderPaidBy() {
   const sel = $("exp-paidby");
   const prev = sel.value;
-  sel.innerHTML = state.people.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  sel.innerHTML = state.people.map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
   if (state.people.some((p) => p.id === prev)) sel.value = prev;
 }
 
@@ -293,7 +298,7 @@ function renderSettle(transfers) {
           <td>${esc(nameOf(t.from))}</td>
           <td>${esc(nameOf(t.to))}</td>
           <td class="num">${num(t.amount)}</td>
-          <td class="action"><button class="btn btn-ghost btn-sm" data-action="pay" data-from="${t.from}" data-to="${t.to}" data-amount="${t.amount}">Record payment</button></td>
+          <td class="action"><button class="btn btn-ghost btn-sm" data-action="pay" data-from="${esc(t.from)}" data-to="${esc(t.to)}" data-amount="${t.amount}">Record payment</button></td>
         </tr>`
       )
       .join("")}</tbody>`;
@@ -344,7 +349,7 @@ function renderExpenses() {
       ${people
         .map((p) => (shares[p.id] ? `<td class="col-person">${num(cents(shares[p.id]))}</td>` : `<td class="col-person dim">–</td>`))
         .join("")}
-      <td class="action"><button class="btn-text" data-action="delete" data-kind="expenses" data-id="${x.id}">Delete</button></td>
+      <td class="action"><button class="btn-text" data-action="delete" data-kind="expenses" data-id="${esc(x.id)}">Delete</button></td>
     </tr>`;
   });
   $("expense-table").innerHTML = `
@@ -377,7 +382,7 @@ function renderPayments() {
           <td>${esc(nameOf(x.from))}</td>
           <td>${esc(nameOf(x.to))}</td>
           <td class="num">${num(x.amount)}</td>
-          <td class="action"><button class="btn-text" data-action="delete" data-kind="payments" data-id="${x.id}">Delete</button></td>
+          <td class="action"><button class="btn-text" data-action="delete" data-kind="payments" data-id="${esc(x.id)}">Delete</button></td>
         </tr>`
       )
       .join("")}</tbody>`;

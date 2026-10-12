@@ -52,7 +52,7 @@
           <span class="count" id="people-count"></span>
         </div>
         <form id="person-form" class="inline-form">
-          <input id="person-name" placeholder="Add a name" required autocomplete="off">
+          <input id="person-name" placeholder="Add a name" maxlength="60" required autocomplete="off">
           <button class="btn">Add</button>
         </form>
         <p class="msg" id="person-msg" role="status"></p>
@@ -64,9 +64,9 @@
         <form id="expense-form" class="form">
           <div class="form-row">
             <label class="field grow"><span>Description</span>
-              <input id="exp-desc" placeholder="Dinner at Toit" required autocomplete="off"></label>
+              <input id="exp-desc" placeholder="Dinner at Toit" maxlength="200" required autocomplete="off"></label>
             <label class="field w-amount"><span>Amount</span>
-              <input id="exp-amount" type="number" step="0.01" min="0.01" placeholder="0.00" required></label>
+              <input id="exp-amount" type="number" step="0.01" min="0.01" max="1000000000" placeholder="0.00" required></label>
           </div>
           <div class="form-row">
             <label class="field grow"><span>Paid by</span><select id="exp-paidby" required></select></label>
@@ -125,7 +125,7 @@
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="vendor/supabase.js"></script> <!-- @supabase/supabase-js 2.45.4, from the npm package -->
   <script src="config.js"></script>
   <script src="store.js"></script>
   <script src="split.js"></script>

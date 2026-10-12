@@ -53,3 +53,8 @@ test("summary matches balances", () => {
   const bal = computeBalances(people, expenses, payments);
   for (const id in bal) assert.strictEqual(s[id].net, bal[id]);
 });
+
+test("negative shares are rejected", () => {
+  assert.throws(() => computeShares({ amount: 10, mode: "exact", participants: ["a", "b"], shares: { a: 20, b: -10 } }));
+  assert.throws(() => computeShares({ amount: 10, mode: "percent", participants: ["a", "b"], shares: { a: 150, b: -50 } }));
+});

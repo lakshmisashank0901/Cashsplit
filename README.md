@@ -26,7 +26,7 @@ The page shows four tables:
 ## Syncing across devices (Supabase)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In the SQL editor, run `supabase/schema.sql`.
+2. In the SQL editor, run `supabase/schema.sql`, then `supabase/hardening.sql`.
 3. Copy the project URL and anon (public) key from **Project Settings → API** into `config.js`.
 4. Open the app, choose **Create an account**, and confirm your email.
 5. In **Authentication → Sign In / Providers**, turn off **Allow new users to sign up**
@@ -34,6 +34,21 @@ The page shows four tables:
 
 The anon key is safe to publish: row level security only lets a signed-in user
 read and write their own rows.
+
+## Security
+
+- **Database:** row level security limits every row to its owner, and `hardening.sql`
+  removes all table access for anonymous visitors as a second layer.
+- **Sign-ups** are disabled after the owner's account exists.
+- **Browser:** `vercel.json` sets a strict Content Security Policy (scripts only from this site,
+  network calls only to the Supabase project) and blocks the site from being framed.
+- **No third-party scripts:** supabase-js is served from `vendor/`, copied from the npm
+  package (version 2.45.4, integrity checked against the npm registry).
+- **Data validation:** everything loaded from the database or cache is validated in
+  `store.js` before it reaches the page, and all text is HTML-escaped when rendered.
+
+If you change the Supabase project, update its URL in both `config.js` and the
+`connect-src` part of the Content-Security-Policy in `vercel.json`.
 
 ## Deploying
 

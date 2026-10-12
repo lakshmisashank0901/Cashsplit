@@ -11,11 +11,71 @@ const Store = (() => {
   const LIST_OF_KIND = { person: "people", expense: "expenses", payment: "payments" };
   const empty = () => ({ currency: "₹", people: [], expenses: [], payments: [] });
 
+  // ---------- Validation ----------
+  // Everything read from the cache or the database passes through sanitize(), so the
+  // UI only ever sees well-formed records, whatever was stored.
+  const CURRENCIES = ["₹", "$", "€", "£"];
+  const MAX_AMOUNT = 1e9;
+  const ID = /^[a-z0-9]{1,32}$/;
+  const DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const list = (v) => (Array.isArray(v) ? v : []);
+  const text = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const finite = (v) => (Number.isFinite(v) ? v : 0);
+  const amount = (v) => (typeof v === "number" && v > 0 && v <= MAX_AMOUNT ? v : null);
+  const day = (v) => (typeof v === "string" && DAY.test(v) ? v : Number.isFinite(v) ? v : finite(Date.now()));
+
+  function sanitize(raw) {
+    const state = empty();
+    if (!raw || typeof raw !== "object") return state;
+    if (CURRENCIES.includes(raw.currency)) state.currency = raw.currency;
+
+    const ids = new Set();
+    for (const p of list(raw.people)) {
+      const name = text(p?.name, 60);
+      if (!ID.test(p?.id) || ids.has(p.id) || !name) continue;
+      ids.add(p.id);
+      state.people.push({ id: p.id, created: finite(p.created), name });
+    }
+
+    for (const e of list(raw.expenses)) {
+      if (!ID.test(e?.id) || amount(e.amount) === null || !ids.has(e.paidBy)) continue;
+      const participants = [...new Set(list(e.participants))].filter((id) => ids.has(id));
+      const shares = {};
+      for (const id of participants) {
+        const v = e.shares?.[id];
+        if (typeof v === "number" && v >= 0 && v <= MAX_AMOUNT) shares[id] = v;
+      }
+      const expense = {
+        id: e.id,
+        created: finite(e.created),
+        date: day(e.date),
+        description: text(e.description, 200),
+        amount: e.amount,
+        paidBy: e.paidBy,
+        mode: ["equal", "exact", "percent"].includes(e.mode) ? e.mode : "equal",
+        participants,
+        shares,
+      };
+      try {
+        Split.computeShares(expense);
+      } catch {
+        continue; // shares don't add up: skip rather than break every total
+      }
+      state.expenses.push(expense);
+    }
+
+    for (const x of list(raw.payments)) {
+      if (!ID.test(x?.id) || amount(x.amount) === null || !ids.has(x.from) || !ids.has(x.to) || x.from === x.to) continue;
+      state.payments.push({ id: x.id, created: finite(x.created), date: day(x.date), from: x.from, to: x.to, amount: x.amount });
+    }
+    return state;
+  }
+
   let onStatus = () => {};
 
   function readCache() {
     try {
-      return JSON.parse(localStorage.getItem(CACHE_KEY)) || empty();
+      return sanitize(JSON.parse(localStorage.getItem(CACHE_KEY)));
     } catch {
       return empty();
     }
@@ -28,13 +88,13 @@ const Store = (() => {
   }
 
   function fromRows(rows) {
-    const state = empty();
+    const raw = empty();
     for (const r of rows) {
-      if (r.kind === "settings") state.currency = r.data.currency || state.currency;
-      else state[LIST_OF_KIND[r.kind]].push(r.data);
+      if (r.kind === "settings") raw.currency = r.data?.currency;
+      else if (LIST_OF_KIND[r.kind]) raw[LIST_OF_KIND[r.kind]].push(r.data);
     }
-    state.people.sort((a, b) => (a.created || 0) - (b.created || 0));
-    return state;
+    raw.people.sort((a, b) => finite(a?.created) - finite(b?.created));
+    return sanitize(raw);
   }
   function toRows(state) {
     return [
@@ -70,6 +130,8 @@ const Store = (() => {
 
   return {
     enabled,
+    CURRENCIES,
+    MAX_AMOUNT,
     cached: readCache,
     setStatusHandler(fn) { onStatus = fn; },
 
