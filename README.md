@@ -1,4 +1,4 @@
-# Splitbook
+# CashSplit
 
 Track shared expenses between friends and see who owes whom.
 

@@ -1,4 +1,4 @@
-// UI for Splitbook. Persistence is in store.js; all maths is in split.js.
+// UI for CashSplit. Persistence is in store.js; all maths is in split.js.
 const $ = (id) => document.getElementById(id);
 
 let state = Store.cached();

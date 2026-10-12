@@ -1,10 +1,10 @@
-// Persistence for Splitbook.
+// Persistence for CashSplit.
 // With Supabase configured (config.js), data is stored online per signed-in user and
 // shared across devices. A copy is cached in localStorage so the page opens instantly.
 // Without Supabase configured, the app works offline in this browser only.
 const Store = (() => {
   const CACHE_KEY = "expense-splitter-v1";
-  const cfg = window.SPLITBOOK_CONFIG || {};
+  const cfg = window.CASHSPLIT_CONFIG || {};
   const enabled = Boolean(cfg.supabaseUrl && !cfg.supabaseUrl.startsWith("YOUR_") && window.supabase);
   const db = enabled ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
 

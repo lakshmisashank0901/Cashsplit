@@ -1,4 +1,4 @@
--- Splitbook storage. Every friend, expense, payment and the settings record is one row,
+-- CashSplit storage. Every friend, expense, payment and the settings record is one row,
 -- so adding from two devices never overwrites the other's changes.
 create table if not exists public.items (
   user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
