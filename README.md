@@ -50,6 +50,13 @@ read and write their own rows.
 If you change the Supabase project, update its URL in both `config.js` and the
 `connect-src` part of the Content-Security-Policy in `vercel.json`.
 
+## Install as an app
+
+CashSplit is installable (PWA). On iPhone, open the site in Safari → Share → **Add to Home Screen**.
+On Android, Chrome's ⋮ menu → **Install app**. On a laptop, use the install icon in Chrome's
+address bar. The logo lives in `icons/` (`logo.svg` plus PNG sizes); `sw.js` caches the app's files
+so it opens without a connection, but always fetches the latest version when online.
+
 ## Deploying
 
 It's a static site, so any static host works (Vercel, Netlify, GitHub Pages, Cloudflare Pages).

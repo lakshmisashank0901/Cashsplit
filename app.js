@@ -493,3 +493,8 @@ if (!Store.enabled) {
     currentUserId = id;
   });
 }
+
+// Installable app (PWA). Service workers need https or localhost, not file://.
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
